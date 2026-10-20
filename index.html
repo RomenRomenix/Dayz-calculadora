@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -23,13 +24,18 @@ h2{font-size:19px;color:#d0d69a}
 .item h3{margin:0 0 10px;font-size:17px}
 label{display:block;font-size:14px;margin:8px 0}
 select,input{width:100%;padding:12px;border-radius:7px;border:1px solid #697367;background:#171b18;color:white;font-size:16px}
+input[type="checkbox"]{width:auto;margin-right:8px;accent-color:#a6ad71;transform:scale(1.15)}
+.check-label{display:flex;align-items:center;gap:4px;margin:12px 0}
 button{width:100%;padding:13px;margin-top:10px;border:0;border-radius:7px;background:#a6ad71;color:#151914;font-size:16px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
 .secondary{background:#454e45;color:white}
 .remove{width:auto;padding:7px 10px;margin:0 0 0 8px}
 .result{background:#29352b;padding:15px;border-radius:10px;margin-top:16px}
 .result li{padding:6px 0}
 #lista li{margin:10px 0}
 .small{font-size:12px;color:#b8beb6;line-height:1.5}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid #454e45;margin:14px 0}
 footer{text-align:center;padding:20px;color:#929b91;font-size:12px}
 </style>
 </head>
@@ -48,14 +54,65 @@ footer{text-align:center;padding:20px;color:#929b91;font-size:12px}
 <div class="item">
 <label for="tipo">Tipo de construcción</label>
 <select id="tipo">
-<option value="puertaMadera">Puerta de madera</option>
-<option value="puertaMetal">Puerta de metal</option>
-<option value="ventanaMadera">Ventana de madera</option>
-<option value="ventanaMetal">Ventana de metal</option>
-<option value="barricada">Barricada de ladrillo</option>
+<option value="muro">Muro / estructura con opción de puerta</option>
+<option value="puertaMadera">Puerta de madera (receta provisional)</option>
+<option value="puertaMetal">Puerta de metal (receta provisional)</option>
+<option value="ventanaMadera">Ventana de madera (receta provisional)</option>
+<option value="ventanaMetal">Ventana de metal (receta provisional)</option>
+<option value="barricada">Barricada de ladrillo (receta provisional)</option>
 </select>
+
+<div id="recetaSimple">
 <label for="cantidad">Cantidad</label>
 <input id="cantidad" type="number" min="1" max="999" value="1">
+</div>
+
+<div id="configMuro">
+<hr>
+<h3>Configuración del muro</h3>
+<p class="small">Los 2 troncos son compartidos por toda la construcción, independientemente de los marcos o revestimientos seleccionados.</p>
+
+<label class="check-label"><input id="marcoInferior" type="checkbox"> Marco inferior (4 tablones + 8 clavos)</label>
+<label class="check-label"><input id="marcoSuperior" type="checkbox"> Marco superior (4 tablones + 8 clavos)</label>
+
+<hr>
+<label for="revestimientoInferior">Revestimiento inferior</label>
+<select id="revestimientoInferior">
+<option value="ninguno">Ninguno</option>
+<option value="madera">Madera (5 tablones + 10 clavos)</option>
+<option value="chapa">Chapa metálica (3 chapas + 12 clavos)</option>
+</select>
+
+<label for="revestimientoSuperior">Revestimiento superior</label>
+<select id="revestimientoSuperior">
+<option value="ninguno">Ninguno</option>
+<option value="madera">Madera (5 tablones + 10 clavos)</option>
+<option value="chapa">Chapa metálica (3 chapas + 12 clavos)</option>
+</select>
+
+<hr>
+<label class="check-label"><input id="espinoInferior" type="checkbox"> Alambre de espino inferior (+1)</label>
+<label class="check-label"><input id="espinoSuperior" type="checkbox"> Alambre de espino superior (+1)</label>
+<label class="check-label"><input id="camuflaje" type="checkbox"> Camuflaje para todo el muro (+1)</label>
+
+<hr>
+<label class="check-label"><input id="puerta" type="checkbox"> Convertir muro en puerta</label>
+<div id="avisoPuerta" class="small hidden">Para añadir una puerta, selecciona al menos el marco inferior o el superior.</div>
+
+<div id="opcionesPuerta" class="hidden">
+<label for="candado">Candado de la puerta</label>
+<select id="candado">
+<option value="3">Candado de combinación de 3 dígitos</option>
+<option value="4">Candado de combinación de 4 dígitos</option>
+<option value="digital">Candado digital (requiere pila de 9 V)</option>
+</select>
+</div>
+
+<label for="cantidadMuro">Cantidad de muros con esta configuración</label>
+<input id="cantidadMuro" type="number" min="1" max="999" value="1">
+<button id="anadirMuroBtn" type="button">Añadir muro configurado</button>
+</div>
+
 <button id="anadirBtn" type="button">Añadir construcción</button>
 </div>
 
@@ -68,9 +125,10 @@ footer{text-align:center;padding:20px;color:#929b91;font-size:12px}
 <div class="result">
 <h3>Materiales necesarios</h3>
 <ul id="totales"><li>Añade una construcción para empezar.</li></ul>
+<p id="cajasClavos" class="small"></p>
 </div>
 
-<p class="small">Las recetas incluidas son provisionales y deben verificarse con las del servidor correspondiente antes de usarlas.</p>
+<p class="small">Las recetas de puertas, ventanas y barricada son provisionales. La configuración del muro usa las cantidades definidas para este proyecto; comprueba que coinciden con las reglas de tu servidor.</p>
 </main>
 
 <footer>Calculadora comunitaria no oficial · DayZ</footer>
@@ -79,11 +137,11 @@ footer{text-align:center;padding:20px;color:#929b91;font-size:12px}
 "use strict";
 
 const recetas={
-puertaMadera:{nombre:"Puerta de madera",materiales:{"Troncos":2,"Tablones":6,"Clavos":12,"Alambre":1}},
-puertaMetal:{nombre:"Puerta de metal",materiales:{"Troncos":2,"Tablones":4,"Clavos":12,"Chapas metálicas":2,"Alambre":1}},
-ventanaMadera:{nombre:"Ventana de madera",materiales:{"Troncos":2,"Tablones":4,"Clavos":8}},
-ventanaMetal:{nombre:"Ventana de metal",materiales:{"Chapas metálicas":1,"Clavos":8}},
-barricada:{nombre:"Barricada de ladrillo",materiales:{"Ladrillos":10,"Mortero":2}}
+puertaMadera:{nombre:"Puerta de madera (provisional)",materiales:{"Troncos":2,"Tablones":6,"Clavos":12,"Alambre":1}},
+puertaMetal:{nombre:"Puerta de metal (provisional)",materiales:{"Troncos":2,"Tablones":4,"Clavos":12,"Chapas metálicas":2,"Alambre":1}},
+ventanaMadera:{nombre:"Ventana de madera (provisional)",materiales:{"Troncos":2,"Tablones":4,"Clavos":8}},
+ventanaMetal:{nombre:"Ventana de metal (provisional)",materiales:{"Chapas metálicas":1,"Clavos":8}},
+barricada:{nombre:"Barricada de ladrillo (provisional)",materiales:{"Ladrillos":10,"Mortero":2}}
 };
 
 let construcciones=[];
@@ -92,21 +150,173 @@ const tipoInput=document.getElementById("tipo");
 const cantidadInput=document.getElementById("cantidad");
 const lista=document.getElementById("lista");
 const totales=document.getElementById("totales");
+const recetaSimple=document.getElementById("recetaSimple");
+const configMuro=document.getElementById("configMuro");
+const puertaCheck=document.getElementById("puerta");
+const marcoInferior=document.getElementById("marcoInferior");
+const marcoSuperior=document.getElementById("marcoSuperior");
+const opcionesPuerta=document.getElementById("opcionesPuerta");
+const avisoPuerta=document.getElementById("avisoPuerta");
+const cajasClavos=document.getElementById("cajasClavos");
+
+function actualizarTipo(){
+const esMuro=tipoInput.value==="muro";
+recetaSimple.classList.toggle("hidden",esMuro);
+configMuro.classList.toggle("hidden",!esMuro);
+document.getElementById("anadirBtn").classList.toggle("hidden",esMuro);
+actualizarPuerta();
+}
+
+function actualizarPuerta(){
+const hayMarco=marcoInferior.checked||marcoSuperior.checked;
+
+if(!hayMarco&&puertaCheck.checked){
+puertaCheck.checked=false;
+}
+
+puertaCheck.disabled=!hayMarco;
+opcionesPuerta.classList.toggle("hidden",!puertaCheck.checked);
+avisoPuerta.classList.toggle("hidden",hayMarco);
+}
+
+function materialesMuro(){
+const m={"Troncos":2};
+
+if(marcoInferior.checked){
+m["Tablones"]=(m["Tablones"]||0)+4;
+m["Clavos"]=(m["Clavos"]||0)+8;
+}
+
+if(marcoSuperior.checked){
+m["Tablones"]=(m["Tablones"]||0)+4;
+m["Clavos"]=(m["Clavos"]||0)+8;
+}
+
+for(const id of ["revestimientoInferior","revestimientoSuperior"]){
+const v=document.getElementById(id).value;
+
+if(v==="madera"){
+m["Tablones"]=(m["Tablones"]||0)+5;
+m["Clavos"]=(m["Clavos"]||0)+10;
+}
+
+if(v==="chapa"){
+m["Chapas metálicas"]=(m["Chapas metálicas"]||0)+3;
+m["Clavos"]=(m["Clavos"]||0)+12;
+}
+}
+
+if(document.getElementById("espinoInferior").checked){
+m["Alambre de espino"]=(m["Alambre de espino"]||0)+1;
+}
+
+if(document.getElementById("espinoSuperior").checked){
+m["Alambre de espino"]=(m["Alambre de espino"]||0)+1;
+}
+
+if(document.getElementById("camuflaje").checked){
+m["Camuflaje"]=1;
+}
+
+if(puertaCheck.checked){
+m["Cable metálico"]=(m["Cable metálico"]||0)+1;
+const c=document.getElementById("candado").value;
+
+if(c==="3"){
+m["Candado de combinación de 3 dígitos"]=1;
+}
+
+if(c==="4"){
+m["Candado de combinación de 4 dígitos"]=1;
+}
+
+if(c==="digital"){
+m["Candado digital"]=1;
+m["Pila de 9 V"]=1;
+}
+}
+
+return m;
+}
+
+function anadirMuro(){
+const cantidad=Number(document.getElementById("cantidadMuro").value);
+
+if(!Number.isInteger(cantidad)||cantidad<1||cantidad>999){
+alert("Introduce una cantidad entera entre 1 y 999.");
+return;
+}
+
+construcciones.push({
+tipo:"muro",
+nombre:resumenMuro(),
+cantidad,
+materiales:materialesMuro()
+});
+
+dibujar();
+}
+
+function resumenMuro(){
+const partes=[];
+
+if(marcoInferior.checked)partes.push("marco inferior");
+if(marcoSuperior.checked)partes.push("marco superior");
+
+const ri=document.getElementById("revestimientoInferior").value;
+const rs=document.getElementById("revestimientoSuperior").value;
+
+if(ri!=="ninguno")partes.push("revestimiento inferior "+ri);
+if(rs!=="ninguno")partes.push("revestimiento superior "+rs);
+
+if(puertaCheck.checked){
+partes.push("con puerta ("+document.getElementById("candado").selectedOptions[0].text+")");
+}
+
+if(document.getElementById("espinoInferior").checked){
+partes.push("espino inferior");
+}
+
+if(document.getElementById("espinoSuperior").checked){
+partes.push("espino superior");
+}
+
+if(document.getElementById("camuflaje").checked){
+partes.push("camuflaje");
+}
+
+return "Muro ["+(partes.length?partes.join(", "):"solo troncos")+"]";
+}
 
 function anadir(){
 const tipo=tipoInput.value;
+if(tipo==="muro")return;
+
 const cantidad=Number(cantidadInput.value);
-if(!Number.isInteger(cantidad)||cantidad<1||cantidad>999){alert("Introduce una cantidad entera entre 1 y 999.");return}
+
+if(!Number.isInteger(cantidad)||cantidad<1||cantidad>999){
+alert("Introduce una cantidad entera entre 1 y 999.");
+return;
+}
+
 construcciones.push({tipo,cantidad});
 dibujar();
 }
 
-function quitar(indice){construcciones.splice(indice,1);dibujar()}
-function limpiar(){construcciones=[];dibujar()}
+function quitar(indice){
+construcciones.splice(indice,1);
+dibujar();
+}
+
+function limpiar(){
+construcciones=[];
+dibujar();
+}
 
 function dibujar(){
 lista.replaceChildren();
 totales.replaceChildren();
+cajasClavos.textContent="";
 
 if(construcciones.length===0){
 lista.textContent="Todavía no has añadido construcciones.";
@@ -120,7 +330,10 @@ const ul=document.createElement("ul");
 const suma={};
 
 construcciones.forEach((construccion,indice)=>{
-const receta=recetas[construccion.tipo];
+const receta=construccion.tipo==="muro"
+?{nombre:construccion.nombre,materiales:construccion.materiales}
+:recetas[construccion.tipo];
+
 const li=document.createElement("li");
 li.appendChild(document.createTextNode(receta.nombre+" × "+construccion.cantidad+" "));
 
@@ -145,10 +358,28 @@ const li=document.createElement("li");
 li.textContent=material+": "+cantidad;
 totales.appendChild(li);
 });
+
+if(suma["Clavos"]){
+const cajas=Math.ceil(suma["Clavos"]/70);
+const sobrantes=cajas*70-suma["Clavos"];
+
+cajasClavos.textContent=
+"Clavos: "+suma["Clavos"]+" unidades. Necesitas "+
+cajas+" caja(s) de 70; sobrarán "+sobrantes+".";
+}
 }
 
+tipoInput.addEventListener("change",actualizarTipo);
+marcoInferior.addEventListener("change",actualizarPuerta);
+marcoSuperior.addEventListener("change",actualizarPuerta);
+puertaCheck.addEventListener("change",actualizarPuerta);
+
+document.getElementById("anadirMuroBtn").addEventListener("click",anadirMuro);
 document.getElementById("anadirBtn").addEventListener("click",anadir);
 document.getElementById("limpiarBtn").addEventListener("click",limpiar);
+
+actualizarTipo();
+dibujar();
 
 if("serviceWorker" in navigator){
 window.addEventListener("load",()=>{

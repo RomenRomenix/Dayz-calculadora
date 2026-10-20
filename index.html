@@ -24,6 +24,7 @@ h2{font-size:19px;color:#d0d69a}
 .item h3{margin:0 0 10px;font-size:17px}
 label{display:block;font-size:14px;margin:8px 0}
 select,input{width:100%;padding:12px;border-radius:7px;border:1px solid #697367;background:#171b18;color:white;font-size:16px}
+select:disabled{opacity:.4;cursor:not-allowed}
 input[type="checkbox"]{width:auto;margin-right:8px;accent-color:#a6ad71;transform:scale(1.15)}
 .check-label{display:flex;align-items:center;gap:4px;margin:12px 0}
 button{width:100%;padding:13px;margin-top:10px;border:0;border-radius:7px;background:#a6ad71;color:#151914;font-size:16px;font-weight:bold;cursor:pointer}
@@ -70,34 +71,58 @@ footer{text-align:center;padding:20px;color:#929b91;font-size:12px}
 <div id="configMuro">
 <hr>
 <h3>Configuración del muro</h3>
-<p class="small">Los 2 troncos son compartidos por toda la construcción, independientemente de los marcos o revestimientos seleccionados.</p>
+<p class="small">Cada muro necesita 2 troncos. Para seleccionar un revestimiento, debes activar antes el marco de esa misma sección.</p>
 
-<label class="check-label"><input id="marcoInferior" type="checkbox"> Marco inferior (4 tablones + 8 clavos)</label>
-<label class="check-label"><input id="marcoSuperior" type="checkbox"> Marco superior (4 tablones + 8 clavos)</label>
+<label class="check-label">
+<input id="marcoInferior" type="checkbox">
+Marco inferior (4 tablones + 8 clavos)
+</label>
+
+<label class="check-label">
+<input id="marcoSuperior" type="checkbox">
+Marco superior (4 tablones + 8 clavos)
+</label>
 
 <hr>
 <label for="revestimientoInferior">Revestimiento inferior</label>
-<select id="revestimientoInferior">
+<select id="revestimientoInferior" disabled>
 <option value="ninguno">Ninguno</option>
 <option value="madera">Madera (5 tablones + 10 clavos)</option>
 <option value="chapa">Chapa metálica (3 chapas + 12 clavos)</option>
 </select>
 
 <label for="revestimientoSuperior">Revestimiento superior</label>
-<select id="revestimientoSuperior">
+<select id="revestimientoSuperior" disabled>
 <option value="ninguno">Ninguno</option>
 <option value="madera">Madera (5 tablones + 10 clavos)</option>
 <option value="chapa">Chapa metálica (3 chapas + 12 clavos)</option>
 </select>
 
 <hr>
-<label class="check-label"><input id="espinoInferior" type="checkbox"> Alambre de espino inferior (+1)</label>
-<label class="check-label"><input id="espinoSuperior" type="checkbox"> Alambre de espino superior (+1)</label>
-<label class="check-label"><input id="camuflaje" type="checkbox"> Camuflaje para todo el muro (+1)</label>
+<label class="check-label">
+<input id="espinoInferior" type="checkbox">
+Alambre de espino inferior (+1)
+</label>
+
+<label class="check-label">
+<input id="espinoSuperior" type="checkbox">
+Alambre de espino superior (+1)
+</label>
+
+<label class="check-label">
+<input id="camuflaje" type="checkbox">
+Camuflaje para todo el muro (+1)
+</label>
 
 <hr>
-<label class="check-label"><input id="puerta" type="checkbox"> Convertir muro en puerta</label>
-<div id="avisoPuerta" class="small hidden">Para añadir una puerta, selecciona al menos el marco inferior o el superior.</div>
+<label class="check-label">
+<input id="puerta" type="checkbox">
+Convertir muro en puerta
+</label>
+
+<div id="avisoPuerta" class="small hidden">
+Para añadir una puerta, selecciona al menos el marco inferior o el superior.
+</div>
 
 <div id="opcionesPuerta" class="hidden">
 <label for="candado">Candado de la puerta</label>
@@ -110,6 +135,7 @@ footer{text-align:center;padding:20px;color:#929b91;font-size:12px}
 
 <label for="cantidadMuro">Cantidad de muros con esta configuración</label>
 <input id="cantidadMuro" type="number" min="1" max="999" value="1">
+
 <button id="anadirMuroBtn" type="button">Añadir muro configurado</button>
 </div>
 
@@ -124,11 +150,15 @@ footer{text-align:center;padding:20px;color:#929b91;font-size:12px}
 
 <div class="result">
 <h3>Materiales necesarios</h3>
-<ul id="totales"><li>Añade una construcción para empezar.</li></ul>
+<ul id="totales">
+<li>Añade una construcción para empezar.</li>
+</ul>
 <p id="cajasClavos" class="small"></p>
 </div>
 
-<p class="small">Las recetas de puertas, ventanas y barricada son provisionales. La configuración del muro usa las cantidades definidas para este proyecto; comprueba que coinciden con las reglas de tu servidor.</p>
+<p class="small">
+Las recetas de puertas, ventanas y barricada son provisionales. Comprueba las cantidades con las reglas de tu servidor.
+</p>
 </main>
 
 <footer>Calculadora comunitaria no oficial · DayZ</footer>
@@ -137,11 +167,26 @@ footer{text-align:center;padding:20px;color:#929b91;font-size:12px}
 "use strict";
 
 const recetas={
-puertaMadera:{nombre:"Puerta de madera (provisional)",materiales:{"Troncos":2,"Tablones":6,"Clavos":12,"Alambre":1}},
-puertaMetal:{nombre:"Puerta de metal (provisional)",materiales:{"Troncos":2,"Tablones":4,"Clavos":12,"Chapas metálicas":2,"Alambre":1}},
-ventanaMadera:{nombre:"Ventana de madera (provisional)",materiales:{"Troncos":2,"Tablones":4,"Clavos":8}},
-ventanaMetal:{nombre:"Ventana de metal (provisional)",materiales:{"Chapas metálicas":1,"Clavos":8}},
-barricada:{nombre:"Barricada de ladrillo (provisional)",materiales:{"Ladrillos":10,"Mortero":2}}
+  puertaMadera:{
+    nombre:"Puerta de madera (provisional)",
+    materiales:{"Troncos":2,"Tablones":6,"Clavos":12,"Alambre":1}
+  },
+  puertaMetal:{
+    nombre:"Puerta de metal (provisional)",
+    materiales:{"Troncos":2,"Tablones":4,"Clavos":12,"Chapas metálicas":2,"Alambre":1}
+  },
+  ventanaMadera:{
+    nombre:"Ventana de madera (provisional)",
+    materiales:{"Troncos":2,"Tablones":4,"Clavos":8}
+  },
+  ventanaMetal:{
+    nombre:"Ventana de metal (provisional)",
+    materiales:{"Chapas metálicas":1,"Clavos":8}
+  },
+  barricada:{
+    nombre:"Barricada de ladrillo (provisional)",
+    materiales:{"Ladrillos":10,"Mortero":2}
+  }
 };
 
 let construcciones=[];
@@ -152,241 +197,308 @@ const lista=document.getElementById("lista");
 const totales=document.getElementById("totales");
 const recetaSimple=document.getElementById("recetaSimple");
 const configMuro=document.getElementById("configMuro");
-const puertaCheck=document.getElementById("puerta");
+
 const marcoInferior=document.getElementById("marcoInferior");
 const marcoSuperior=document.getElementById("marcoSuperior");
+
+const revestimientoInferior=document.getElementById("revestimientoInferior");
+const revestimientoSuperior=document.getElementById("revestimientoSuperior");
+
+const puertaCheck=document.getElementById("puerta");
 const opcionesPuerta=document.getElementById("opcionesPuerta");
 const avisoPuerta=document.getElementById("avisoPuerta");
 const cajasClavos=document.getElementById("cajasClavos");
 
 function actualizarTipo(){
-const esMuro=tipoInput.value==="muro";
-recetaSimple.classList.toggle("hidden",esMuro);
-configMuro.classList.toggle("hidden",!esMuro);
-document.getElementById("anadirBtn").classList.toggle("hidden",esMuro);
-actualizarPuerta();
+  const esMuro=tipoInput.value==="muro";
+
+  recetaSimple.classList.toggle("hidden",esMuro);
+  configMuro.classList.toggle("hidden",!esMuro);
+  document.getElementById("anadirBtn").classList.toggle("hidden",esMuro);
+
+  actualizarRevestimientos();
+  actualizarPuerta();
+}
+
+function actualizarRevestimientos(){
+  revestimientoInferior.disabled=!marcoInferior.checked;
+  revestimientoSuperior.disabled=!marcoSuperior.checked;
+
+  if(!marcoInferior.checked){
+    revestimientoInferior.value="ninguno";
+  }
+
+  if(!marcoSuperior.checked){
+    revestimientoSuperior.value="ninguno";
+  }
 }
 
 function actualizarPuerta(){
-const hayMarco=marcoInferior.checked||marcoSuperior.checked;
+  const hayMarco=marcoInferior.checked||marcoSuperior.checked;
 
-if(!hayMarco&&puertaCheck.checked){
-puertaCheck.checked=false;
-}
+  if(!hayMarco){
+    puertaCheck.checked=false;
+  }
 
-puertaCheck.disabled=!hayMarco;
-opcionesPuerta.classList.toggle("hidden",!puertaCheck.checked);
-avisoPuerta.classList.toggle("hidden",hayMarco);
+  puertaCheck.disabled=!hayMarco;
+  opcionesPuerta.classList.toggle("hidden",!puertaCheck.checked);
+  avisoPuerta.classList.toggle("hidden",hayMarco);
 }
 
 function materialesMuro(){
-const m={"Troncos":2};
+  const materiales={"Troncos":2};
 
-if(marcoInferior.checked){
-m["Tablones"]=(m["Tablones"]||0)+4;
-m["Clavos"]=(m["Clavos"]||0)+8;
-}
+  if(marcoInferior.checked){
+    materiales["Tablones"]=(materiales["Tablones"]||0)+4;
+    materiales["Clavos"]=(materiales["Clavos"]||0)+8;
+  }
 
-if(marcoSuperior.checked){
-m["Tablones"]=(m["Tablones"]||0)+4;
-m["Clavos"]=(m["Clavos"]||0)+8;
-}
+  if(marcoSuperior.checked){
+    materiales["Tablones"]=(materiales["Tablones"]||0)+4;
+    materiales["Clavos"]=(materiales["Clavos"]||0)+8;
+  }
 
-for(const id of ["revestimientoInferior","revestimientoSuperior"]){
-const v=document.getElementById(id).value;
+  if(marcoInferior.checked){
+    if(revestimientoInferior.value==="madera"){
+      materiales["Tablones"]=(materiales["Tablones"]||0)+5;
+      materiales["Clavos"]=(materiales["Clavos"]||0)+10;
+    }
 
-if(v==="madera"){
-m["Tablones"]=(m["Tablones"]||0)+5;
-m["Clavos"]=(m["Clavos"]||0)+10;
-}
+    if(revestimientoInferior.value==="chapa"){
+      materiales["Chapas metálicas"]=(materiales["Chapas metálicas"]||0)+3;
+      materiales["Clavos"]=(materiales["Clavos"]||0)+12;
+    }
+  }
 
-if(v==="chapa"){
-m["Chapas metálicas"]=(m["Chapas metálicas"]||0)+3;
-m["Clavos"]=(m["Clavos"]||0)+12;
-}
-}
+  if(marcoSuperior.checked){
+    if(revestimientoSuperior.value==="madera"){
+      materiales["Tablones"]=(materiales["Tablones"]||0)+5;
+      materiales["Clavos"]=(materiales["Clavos"]||0)+10;
+    }
 
-if(document.getElementById("espinoInferior").checked){
-m["Alambre de espino"]=(m["Alambre de espino"]||0)+1;
-}
+    if(revestimientoSuperior.value==="chapa"){
+      materiales["Chapas metálicas"]=(materiales["Chapas metálicas"]||0)+3;
+      materiales["Clavos"]=(materiales["Clavos"]||0)+12;
+    }
+  }
 
-if(document.getElementById("espinoSuperior").checked){
-m["Alambre de espino"]=(m["Alambre de espino"]||0)+1;
-}
+  if(document.getElementById("espinoInferior").checked){
+    materiales["Alambre de espino"]=(materiales["Alambre de espino"]||0)+1;
+  }
 
-if(document.getElementById("camuflaje").checked){
-m["Camuflaje"]=1;
-}
+  if(document.getElementById("espinoSuperior").checked){
+    materiales["Alambre de espino"]=(materiales["Alambre de espino"]||0)+1;
+  }
 
-if(puertaCheck.checked){
-m["Cable metálico"]=(m["Cable metálico"]||0)+1;
-const c=document.getElementById("candado").value;
+  if(document.getElementById("camuflaje").checked){
+    materiales["Camuflaje"]=1;
+  }
 
-if(c==="3"){
-m["Candado de combinación de 3 dígitos"]=1;
-}
+  if(puertaCheck.checked){
+    materiales["Cable metálico"]=(materiales["Cable metálico"]||0)+1;
 
-if(c==="4"){
-m["Candado de combinación de 4 dígitos"]=1;
-}
+    const candado=document.getElementById("candado").value;
 
-if(c==="digital"){
-m["Candado digital"]=1;
-m["Pila de 9 V"]=1;
-}
-}
+    if(candado==="3"){
+      materiales["Candado de combinación de 3 dígitos"]=1;
+    }
 
-return m;
-}
+    if(candado==="4"){
+      materiales["Candado de combinación de 4 dígitos"]=1;
+    }
 
-function anadirMuro(){
-const cantidad=Number(document.getElementById("cantidadMuro").value);
+    if(candado==="digital"){
+      materiales["Candado digital"]=1;
+      materiales["Pila de 9 V"]=1;
+    }
+  }
 
-if(!Number.isInteger(cantidad)||cantidad<1||cantidad>999){
-alert("Introduce una cantidad entera entre 1 y 999.");
-return;
-}
-
-construcciones.push({
-tipo:"muro",
-nombre:resumenMuro(),
-cantidad,
-materiales:materialesMuro()
-});
-
-dibujar();
+  return materiales;
 }
 
 function resumenMuro(){
-const partes=[];
+  const partes=[];
 
-if(marcoInferior.checked)partes.push("marco inferior");
-if(marcoSuperior.checked)partes.push("marco superior");
+  if(marcoInferior.checked)partes.push("marco inferior");
+  if(marcoSuperior.checked)partes.push("marco superior");
 
-const ri=document.getElementById("revestimientoInferior").value;
-const rs=document.getElementById("revestimientoSuperior").value;
+  if(revestimientoInferior.value!=="ninguno"){
+    partes.push("revestimiento inferior "+revestimientoInferior.value);
+  }
 
-if(ri!=="ninguno")partes.push("revestimiento inferior "+ri);
-if(rs!=="ninguno")partes.push("revestimiento superior "+rs);
+  if(revestimientoSuperior.value!=="ninguno"){
+    partes.push("revestimiento superior "+revestimientoSuperior.value);
+  }
 
-if(puertaCheck.checked){
-partes.push("con puerta ("+document.getElementById("candado").selectedOptions[0].text+")");
+  if(puertaCheck.checked){
+    partes.push("con puerta ("+
+      document.getElementById("candado").selectedOptions[0].text+")");
+  }
+
+  if(document.getElementById("espinoInferior").checked){
+    partes.push("espino inferior");
+  }
+
+  if(document.getElementById("espinoSuperior").checked){
+    partes.push("espino superior");
+  }
+
+  if(document.getElementById("camuflaje").checked){
+    partes.push("camuflaje");
+  }
+
+  return "Muro ["+(partes.length?partes.join(", "):"solo troncos")+"]";
 }
 
-if(document.getElementById("espinoInferior").checked){
-partes.push("espino inferior");
-}
+function anadirMuro(){
+  actualizarRevestimientos();
+  actualizarPuerta();
 
-if(document.getElementById("espinoSuperior").checked){
-partes.push("espino superior");
-}
+  const cantidad=Number(document.getElementById("cantidadMuro").value);
 
-if(document.getElementById("camuflaje").checked){
-partes.push("camuflaje");
-}
+  if(!Number.isInteger(cantidad)||cantidad<1||cantidad>999){
+    alert("Introduce una cantidad entera entre 1 y 999.");
+    return;
+  }
 
-return "Muro ["+(partes.length?partes.join(", "):"solo troncos")+"]";
+  construcciones.push({
+    tipo:"muro",
+    nombre:resumenMuro(),
+    cantidad:cantidad,
+    materiales:materialesMuro()
+  });
+
+  dibujar();
 }
 
 function anadir(){
-const tipo=tipoInput.value;
-if(tipo==="muro")return;
+  const tipo=tipoInput.value;
 
-const cantidad=Number(cantidadInput.value);
+  if(tipo==="muro")return;
 
-if(!Number.isInteger(cantidad)||cantidad<1||cantidad>999){
-alert("Introduce una cantidad entera entre 1 y 999.");
-return;
-}
+  const cantidad=Number(cantidadInput.value);
 
-construcciones.push({tipo,cantidad});
-dibujar();
+  if(!Number.isInteger(cantidad)||cantidad<1||cantidad>999){
+    alert("Introduce una cantidad entera entre 1 y 999.");
+    return;
+  }
+
+  construcciones.push({
+    tipo:tipo,
+    cantidad:cantidad
+  });
+
+  dibujar();
 }
 
 function quitar(indice){
-construcciones.splice(indice,1);
-dibujar();
+  construcciones.splice(indice,1);
+  dibujar();
 }
 
 function limpiar(){
-construcciones=[];
-dibujar();
+  construcciones=[];
+  dibujar();
 }
 
 function dibujar(){
-lista.replaceChildren();
-totales.replaceChildren();
-cajasClavos.textContent="";
+  lista.replaceChildren();
+  totales.replaceChildren();
+  cajasClavos.textContent="";
 
-if(construcciones.length===0){
-lista.textContent="Todavía no has añadido construcciones.";
-const li=document.createElement("li");
-li.textContent="Añade una construcción para empezar.";
-totales.appendChild(li);
-return;
-}
+  if(construcciones.length===0){
+    lista.textContent="Todavía no has añadido construcciones.";
 
-const ul=document.createElement("ul");
-const suma={};
+    const li=document.createElement("li");
+    li.textContent="Añade una construcción para empezar.";
+    totales.appendChild(li);
+    return;
+  }
 
-construcciones.forEach((construccion,indice)=>{
-const receta=construccion.tipo==="muro"
-?{nombre:construccion.nombre,materiales:construccion.materiales}
-:recetas[construccion.tipo];
+  const ul=document.createElement("ul");
+  const suma={};
 
-const li=document.createElement("li");
-li.appendChild(document.createTextNode(receta.nombre+" × "+construccion.cantidad+" "));
+  construcciones.forEach((construccion,indice)=>{
+    const receta=construccion.tipo==="muro"
+      ?{
+        nombre:construccion.nombre,
+        materiales:construccion.materiales
+      }
+      :recetas[construccion.tipo];
 
-const boton=document.createElement("button");
-boton.type="button";
-boton.className="secondary remove";
-boton.textContent="Quitar";
-boton.setAttribute("aria-label","Quitar "+receta.nombre);
-boton.addEventListener("click",()=>quitar(indice));
-li.appendChild(boton);
-ul.appendChild(li);
+    const li=document.createElement("li");
+    li.appendChild(document.createTextNode(
+      receta.nombre+" × "+construccion.cantidad+" "
+    ));
 
-Object.entries(receta.materiales).forEach(([material,cantidadPorUnidad])=>{
-suma[material]=(suma[material]||0)+cantidadPorUnidad*construccion.cantidad;
-});
-});
+    const boton=document.createElement("button");
+    boton.type="button";
+    boton.className="secondary remove";
+    boton.textContent="Quitar";
+    boton.setAttribute("aria-label","Quitar "+receta.nombre);
+    boton.addEventListener("click",()=>quitar(indice));
 
-lista.appendChild(ul);
+    li.appendChild(boton);
+    ul.appendChild(li);
 
-Object.entries(suma).forEach(([material,cantidad])=>{
-const li=document.createElement("li");
-li.textContent=material+": "+cantidad;
-totales.appendChild(li);
-});
+    Object.entries(receta.materiales).forEach(([material,cantidad])=>{
+      suma[material]=(suma[material]||0)+cantidad*construccion.cantidad;
+    });
+  });
 
-if(suma["Clavos"]){
-const cajas=Math.ceil(suma["Clavos"]/70);
-const sobrantes=cajas*70-suma["Clavos"];
+  lista.appendChild(ul);
 
-cajasClavos.textContent=
-"Clavos: "+suma["Clavos"]+" unidades. Necesitas "+
-cajas+" caja(s) de 70; sobrarán "+sobrantes+".";
-}
+  Object.entries(suma).forEach(([material,cantidad])=>{
+    const li=document.createElement("li");
+    li.textContent=material+": "+cantidad;
+    totales.appendChild(li);
+  });
+
+  if(suma["Clavos"]){
+    const cajas=Math.ceil(suma["Clavos"]/70);
+    const sobrantes=cajas*70-suma["Clavos"];
+
+    cajasClavos.textContent=
+      "Clavos: "+suma["Clavos"]+
+      " unidades. Necesitas "+cajas+
+      " caja(s) de 70; sobrarán "+sobrantes+".";
+  }
 }
 
 tipoInput.addEventListener("change",actualizarTipo);
-marcoInferior.addEventListener("change",actualizarPuerta);
-marcoSuperior.addEventListener("change",actualizarPuerta);
+
+marcoInferior.addEventListener("change",()=>{
+  actualizarRevestimientos();
+  actualizarPuerta();
+});
+
+marcoSuperior.addEventListener("change",()=>{
+  actualizarRevestimientos();
+  actualizarPuerta();
+});
+
 puertaCheck.addEventListener("change",actualizarPuerta);
 
-document.getElementById("anadirMuroBtn").addEventListener("click",anadirMuro);
-document.getElementById("anadirBtn").addEventListener("click",anadir);
-document.getElementById("limpiarBtn").addEventListener("click",limpiar);
+document.getElementById("anadirMuroBtn")
+  .addEventListener("click",anadirMuro);
+
+document.getElementById("anadirBtn")
+  .addEventListener("click",anadir);
+
+document.getElementById("limpiarBtn")
+  .addEventListener("click",limpiar);
 
 actualizarTipo();
+actualizarRevestimientos();
+actualizarPuerta();
 dibujar();
 
 if("serviceWorker" in navigator){
-window.addEventListener("load",()=>{
-navigator.serviceWorker.register("./sw.js").catch(error=>{
-console.error("Error al activar la caché:",error);
-});
-});
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("./sw.js").catch(error=>{
+      console.error("Error al activar la caché:",error);
+    });
+  });
 }
 </script>
 </body>
